@@ -1,0 +1,50 @@
+pip install mysql-connector-python pandas
+
+import mysql.connector
+import pandas as pd
+
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="Sit@3210",
+    database="divyaprada"
+)
+
+query = "SELECT * FROM student"
+df = pd.read_sql(query, conn)
+df
+
+
+sudo mysql
+SELECT user, host, plugin FROM mysql.user WHERE user='root';
+plugin = auth_socket
+
+
+sudo mysql
+CREATE USER 'pyuser'@'localhost' IDENTIFIED BY 'mypassword';
+GRANT ALL PRIVILEGES ON divyaprada.* TO 'pyuser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+import mysql.connector
+import pandas as pd
+
+conn = mysql.connector.connect(
+    host="localhost",
+    user="pyuser",
+    password="mypassword",
+    database="divyaprada"
+)
+
+query = "SELECT * FROM student"
+df = pd.read_sql(query, conn)
+df
+
+
+ALTER USER 'root'@'localhost'
+IDENTIFIED WITH mysql_native_password BY 'Sit@3210';
+FLUSH PRIVILEGES;
+
+
+
+
