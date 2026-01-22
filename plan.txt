@@ -1,0 +1,17 @@
+Great idea. Here’s a copy‑pastable master prompt for Lovable to generate CareLink Rural, plus follow‑up prompts for iterations. Keep it tight and deterministic to get the best results.
+
+### Master prompt for Lovable
+Build “CareLink Rural”: an offline‑first telehealth MVP focused on low-connectivity use. Deliver 3 deployable apps in one monorepo.
+
+Scope
+- Mobile app (React Native + Expo)
+- Backend API (FastAPI + Postgres via Supabase)
+- Web clinician dashboard (React + Vite + Chakra UI)
+
+Non-negotiables
+- Offline-first records with SQLite and an “outbox” queue
+- On-device vitals: start with heart rate via camera, stub others
+- SMS fallback via Twilio when HTTP fails
+- Auto-sync when connectivity returns
+- Minimal PHI in SMS; use patient codes
+- Simple priority queue on dashboard with location pin

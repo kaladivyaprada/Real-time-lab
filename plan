@@ -1,0 +1,115 @@
+Great idea. Here’s a copy‑pastable master prompt for Lovable to generate CareLink Rural, plus follow‑up prompts for iterations. Keep it tight and deterministic to get the best results.
+
+### Master prompt for Lovable
+Build “CareLink Rural”: an offline‑first telehealth MVP focused on low-connectivity use. Deliver 3 deployable apps in one monorepo.
+
+Scope
+- Mobile app (React Native + Expo)
+- Backend API (FastAPI + Postgres via Supabase)
+- Web clinician dashboard (React + Vite + Chakra UI)
+
+Non-negotiables
+- Offline-first records with SQLite and an “outbox” queue
+- On-device vitals: start with heart rate via camera, stub others
+- SMS fallback via Twilio when HTTP fails
+- Auto-sync when connectivity returns
+- Minimal PHI in SMS; use patient codes
+- Simple priority queue on dashboard with location pin
+
+Tech choices
+- Mobile: React Native (Expo), expo-sqlite, React Query, TFLite bridge, Expo Location, TypeScript
+- Backend: FastAPI, SQLModel/SQLAlchemy, Supabase Postgres, Uvicorn, pydantic, python-jose
+- SMS: Twilio webhook parsing a compact format: P:<patientCode>|HR:<int>|LAT:<float>|LON:<float>
+- Web: React + Vite + Chakra UI, TypeScript
+- Infra: Dockerfile for API, GitHub Actions templates
+
+Data model (Postgres)
+- patients(id uuid pk, code text unique, name text, phone text, created_at timestamptz)
+- readings(id uuid pk, patient_id uuid fk, hr int, spo2 int null, rr int null, risk text, ts timestamptz, lat float8 null, lon float8 null, source text, synced bool)
+- cases(id uuid pk, patient_id uuid fk, priority text, status text, last_event timestamptz)
+
+Features to implement
+1) Mobile (Expo)
+- Screens: Register Patient, Capture Vitals, Triage Result, Outbox, Settings
+- Local DB: expo-sqlite tables patients, readings, outbox
+- Outbox: retries POST /vitals when connectivity resumes; exponential backoff
+- Connectivity listener: on change → flush outbox
+- SMS fallback: if POST fails and no connectivity, format and send via native SMS composer; include patient code and HR; keep PHI minimal
+- On-device HR: TFLite or stub module with deterministic fake readings behind a feature flag: USE_FAKE_VITALS=true
+- Risk scoring: simple rule based: HR > 110 → “High”, 90–110 “Medium”, else “Low”
+- Settings: set API base URL, Twilio number, toggle fake vitals
+
+2) Backend (FastAPI)
+- Auth: Supabase JWT verification endpoint POST /auth/exchange
+- POST /vitals: accepts JSON {patient_code, hr, ts, lat?, lon?, source}, computes risk, inserts reading, upserts case with updated priority
+- GET /cases: list with patient name, code, priority, last_event, location
+- POST /twilio/sms: verify HMAC secret; parse SMS format; attach to patient by code or phone; create reading + case update
+- Simple CORS; structured logging; .env config
+- Migrations: SQL or Alembic stub
+
+3) Dashboard (Web)
+- Views: Cases table with filters by priority; Patient detail with recent readings and mini trend
+- Map pin when lat/lon present
+- Status badges: Green Low, Amber Medium, Red High
+
+Demo script helpers
+- Seed script to create 5 patients with codes P001..P005
+- CLI to simulate inbound SMS
+- Flag to force “offline mode” in app to demo outbox
+
+Repository structure
+- app/ (Expo RN)
+- api/ (FastAPI)
+- web/ (React Vite)
+- infra/ (docker-compose for Postgres locally, GitHub Actions, seed scripts)
+
+Quality bars
+- TypeScript everywhere except Python
+- Lint + basic tests: backend unit tests for /vitals and SMS parser
+- Readme with run instructions and demo checklist
+- Environment examples: app/.env.example, api/.env.example, web/.env.example
+
+Deliverables
+- Running dev locally: docker compose up db, uvicorn main:app, npm dev for web, expo start for app
+- Ready to deploy: API Dockerfile for Render/Fly.io; web deploy config for Vercel; EAS notes for app
+- Include sample Twilio webhook curl
+- Keep code minimal, predictable, and hackathon-ready
+
+Acceptance criteria
+- Toggle airplane mode on device, capture HR, queued in outbox, SMS fallback available, data syncs when online, case appears High in dashboard
+- Backend parses sample SMS and creates case
+- Dashboard shows priority queue sorted with Red at top
+
+Output requirements
+- Generate all source files with comments and TODOs for any stubs
+- Provide exact commands to run each service
+- Do not include marketing text; only code and concise docs
+
+### Follow‑up prompts to iterate in Lovable
+- Add USSD fallback stub and make it optional behind USE_USSD=false flag. Keep the SMS path default.
+- Replace fake HR with a working TFLite camera pipeline, keeping a DEV_FAKE_HR fallback.
+- Add row‑level security example policies for Supabase and move secrets to env.
+- Add battery and latency logging, and expose a tiny “Stats” screen in the app for the demo.
+- Improve dashboard with a map view and priority filter tabs.
+- Add end‑to‑end seed and demo script: create patients, push two readings, simulate one SMS.
+
+### Demo data and commands to request
+- Generate seed script creating patients P001..P005.
+- Provide curl examples:
+  - curl POST /vitals
+  - curl POST /twilio/sms with Body="P:P001|HR:128|LAT:12.97|LON:77.59" and header X‑Webhook‑Secret
+- Provide Expo deep link to open the outbox screen.
+
+### Testing checklist prompt
+- Create a Playwright test for web cases table sort by priority.
+- Create pytest for SMS parser happy path and malformed messages.
+- Add a React Native jest test for the outbox formatter and retry policy.
+
+### Final polish prompt
+- Produce a concise README with:
+  - Architecture diagram ASCII
+  - 5–7 minute demo flow
+  - Env setup and one‑command local run
+  - Known limitations and next steps
+
+If you want, I can tailor the master prompt to exactly match your chosen stack switches, like Firebase Auth instead of Supabase or Node instead of FastAPI.
